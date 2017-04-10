@@ -1,0 +1,199 @@
+<!-- 
+	REST callout page
+-->
+<apex:page 
+	showHeader="true" 
+	sidebar="true"
+	cache="true" 
+	tabStyle="Contact"
+	controller="RestHerokuCalloutsCtrl">
+
+	<!-- Resources -->
+	<apex:includeScript value="{!$Resource.JQuery_3_1_0}"/>
+    <apex:includeScript value="{!$Resource.JQueryUI_1_12_1}"/>
+    <apex:includeScript value="{!$Resource.JQueryBlockUI_2_7}"/>
+
+    <style type="text/css">
+    	.errorConsole .x-grid3-row-over, body .pbBody table.list tr.dataRow.highlight td, body .pbBody table.list tr.dataRow.highlight th {
+            background-color: rgba(86, 69, 140, .70) !important;
+            color: rgba(255, 255, 255, 1);
+        }
+    </style>
+
+	<script type="text/javascript">
+		var $ = jQuery.noConflict();
+
+		/**
+		 * On page init
+		 */
+		$(document).ready(
+			function() 
+			{
+				document.querySelector('[id$="PageTable"]')
+					.style.display = 'none';
+
+				//When page loaded, disable Save and Reset buttons
+				disableButton();
+
+			}
+		);
+
+
+		$("[id$='Data']").click(
+			function() 
+			{
+		  		if ($("[id$='PageTable']").css('display') == 'none') 
+		  		{
+		  			$("[id$='PageTable']").slideDown("slow");
+		  		} 
+		  		else 
+		  		{
+		    		$("[id$='PageTable']").css('display', 'none');
+		  		}
+			}
+		);
+
+
+		function onKeyup(sfId) {
+			$("[id$='"+ sfId + "']").keyup(function() {
+				if ($(this).val()) {
+					enableButton();
+				} else {
+					disableButton();
+				}
+			});
+		}
+
+
+		function enableButton() {
+			$("[id$='Save']").removeClass('btnDisabled').addClass('btn');
+			$("[id$='Reset']").removeClass('btnDisabled').addClass('btn');
+			$("[id$='Save']").removeAttr('disabled');
+			$("[id$='Reset']").removeAttr('disabled');
+		}
+
+
+		function disableButton() {
+			$("[id$='Save']").addClass('btn btnDisabled');
+			$("[id$='Reset']").addClass('btn btnDisabled')
+			$("[id$='Save']").prop('disabled', true);
+			$("[id$='Reset']").prop('disabled', true);
+		};
+
+
+		function blockElement(sfId, text) {  
+			$('[id$='+sfId+']').block({ message: '<img src="/img/loading32.gif" /><h1>'+text+'</h1>',   
+	          	css: {   
+	             	border: 'none',   
+	             	padding: '15px',   
+	             	'-webkit-border-radius': '10px',   
+	             	'-moz-border-radius': '10px',   
+	             	opacity: .9  
+	            }   
+          	}); 
+
+          	return false;  
+        }
+
+          
+        function unblockElement(sfId) {  
+          	$('[id$='+sfId+']').unblock(); 
+          	$('[id$='+sfId+']').addClass("unblockElem"); 
+        }
+        
+        
+        var resetForm = function(sfId) {
+            console.log('Resetting');
+            document.querySelector("input[id$="+sfId+"]").value = '';
+            
+            return false;
+        }
+
+	</script>
+
+    <!-- Header -->
+	<apex:sectionHeader title="Heroku REST Callout" subtitle="Animal Callouts" />
+
+	<apex:form id="PageForm">
+
+		<!-- Page message -->
+		<apex:pageMessages escape="false" id="Message" />
+
+		<apex:actionStatus onstart="blockElement('PageBlock', 'Searching...')" onstop="unblockElement('PageBlock')" id="blockUI1"/>
+		<apex:actionStatus onstart="blockElement('PageForm', 'Saving...')" onstop="unblockElement('PageForm')" id="blockUI2"/> 
+		
+		<!--<apex:actionFunction action="{!sendHerokuData}" name="sendData" status="blockUI2"/>-->
+
+        <!-- Form -->
+		<apex:pageBlock title="Animals List" id="PageBlock">
+
+			<!-- Form section -->
+			<apex:pageBlockSection columns="1" collapsible="false">
+				<apex:pageBlockSectionItem >
+					<apex:outputText value="Animal Name: "/>
+					<apex:inputText 
+						value="{!animalName}" 
+						id="Name" 
+						onkeyup="onKeyup('Name')"/>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+			<br />
+
+			<!-- Buttons -->
+			<apex:pageBlockButtons location="bottom">
+				<apex:commandButton 
+					id="Data" 
+					action="{!getHerokuData}" 
+					value="Get Animals" 
+					reRender="PageForm, Message" 
+					status="blockUI1" />
+				<apex:commandButton 
+					id="Save" 
+					value="Save Animal" 
+					action="{!sendHerokuData}" 
+					status="blockUI2" 
+					reRender="PageForm, Message" />
+				<apex:commandButton 
+					id="Reset" 
+					value="Cancel" 
+					onclick="return resetForm('Name');" 
+					action="{!resetForm}" 
+					reRender="PageForm, Message" />
+			</apex:pageBlockButtons>
+
+			<!-- Table -->
+			<div id="PageTable">
+				<apex:pageBlockTable 
+					value="{!animals}"	
+					var="dirKey" 
+					align="center" 
+					columns="2">
+				    <apex:column>
+				        <apex:facet name="header">
+	                        <apex:outputPanel >
+	                            <apex:outputText value="Serial ID"/>
+	                        </apex:outputPanel>
+	                    </apex:facet>
+	                    <apex:outputText value="{!dirKey}"/>
+				    </apex:column>
+				    <apex:column >
+				        <apex:facet name="header">
+	                        <apex:outputPanel >
+	                            <apex:outputText value="Animal Name"/>
+	                        </apex:outputPanel>
+	                    </apex:facet>
+	                    <apex:outputText value="{!animals[dirKey]}"/>
+				    </apex:column>
+				</apex:pageBlockTable>		
+			</div>
+
+		</apex:pageBlock>		
+
+        
+		<!-- <apex:pageBlock title="Animals List">			
+			
+		</apex:pageBlock> -->
+
+	</apex:form>
+
+</apex:page>
